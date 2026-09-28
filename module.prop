@@ -1,6 +1,6 @@
-id=rainbow
-name=Rainbow LED
+id=transflagled
+name=Trans Flag LED
 version=v1.0
 versionCode=1
-author=Mlsplays&FreeXR
-description=Rainbow LED no adb required!
+author=Mlsplays&FreeXR&Claude
+description=Trans flag LED (pink > blue > white > blue > pink), no adb required!
