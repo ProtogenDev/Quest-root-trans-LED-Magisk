@@ -1,10 +1,21 @@
 #!/system/bin/sh
 
-# I dont know why this exsists 
+# Trans flag LED: pink > blue > white > blue > pink, on repeat while awake
 
 RED_LED="/sys/class/leds/red/brightness"
 GREEN_LED="/sys/class/leds/green/brightness"
 BLUE_LED="/sys/class/leds/blue/brightness"
+
+# ---- tweak these ----
+# Raw LEDs wash out pastels, so these are tuned to LOOK like the flag.
+# (Exact flag colours would be pink 245 169 184 / blue 91 206 250)
+PINK_R=255;  PINK_G=45;   PINK_B=100
+BLUE_R=0;    BLUE_G=140;  BLUE_B=255
+WHITE_R=255; WHITE_G=255; WHITE_B=255
+
+STEPS=50        # more = smoother fade
+DELAY=0.02      # seconds per step (bigger = slower)
+# ---------------------
 
 set_rgb() {
     echo "$1" > "$RED_LED" 2>/dev/null
@@ -12,54 +23,47 @@ set_rgb() {
     echo "$3" > "$BLUE_LED" 2>/dev/null
 }
 
-clamp() {
-    if [ "$1" -lt 0 ]; then echo 0
-    elif [ "$1" -gt 255 ]; then echo 255
-    else echo "$1"
-    fi
-}
-
-
 is_awake() {
     dumpsys power 2>/dev/null | grep -q "mWakefulness=Awake"
 }
 
+# fade r1 g1 b1 r2 g2 b2
+fade() {
+    i=1
+    while [ "$i" -le "$STEPS" ]; do
+        set_rgb $(( $1 + ($4 - $1) * i / STEPS )) \
+                $(( $2 + ($5 - $2) * i / STEPS )) \
+                $(( $3 + ($6 - $3) * i / STEPS ))
+        sleep "$DELAY"
+        i=$((i + 1))
+    done
+}
 
-rgb_cycle() {
+trans_cycle() {
     while is_awake; do
-        for i in $(seq 0 5 255); do
-            set_rgb $(clamp $((255 - i))) $(clamp $i) 0    # Red to Green
-            sleep 0.005
-        done
+        fade $PINK_R  $PINK_G  $PINK_B   $BLUE_R  $BLUE_G  $BLUE_B    # pink > blue
         is_awake || break
-
-        for i in $(seq 0 5 255); do
-            set_rgb 0 $(clamp $((255 - i))) $(clamp $i)    # Green to Blue
-            sleep 0.005
-        done
+        fade $BLUE_R  $BLUE_G  $BLUE_B   $WHITE_R $WHITE_G $WHITE_B   # blue > white
         is_awake || break
-
-        for i in $(seq 0 5 255); do
-            set_rgb $(clamp $i) 0 $(clamp $((255 - i)))    # Blue to Red
-            sleep 0.005
-        done
+        fade $WHITE_R $WHITE_G $WHITE_B  $BLUE_R  $BLUE_G  $BLUE_B    # white > blue
+        is_awake || break
+        fade $BLUE_R  $BLUE_G  $BLUE_B   $PINK_R  $PINK_G  $PINK_B    # blue > pink
     done
 }
 
 main_loop() {
- 
     while [ "$(getprop sys.boot_completed)" != "1" ]; do
         sleep 1
     done
 
     while true; do
         if is_awake; then
-            rgb_cycle
+            set_rgb $PINK_R $PINK_G $PINK_B
+            trans_cycle
             set_rgb 0 0 0
         fi
         sleep 1
     done
 }
-
 
 main_loop &
