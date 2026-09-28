@@ -1,5 +1,5 @@
-# Rainbow power LED magisk module
-Make your LED always rainbow when your device is awake
+# Trans power LED magisk module
+Make your LED always trans when your device is awake
 
 ## Note: This module was designed for the Quest 1
 
@@ -11,3 +11,5 @@ Make your LED always rainbow when your device is awake
 
 # Credits
 -FreeXR
+- Mlsplays
+- Claude
